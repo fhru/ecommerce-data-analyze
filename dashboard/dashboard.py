@@ -6,7 +6,7 @@ from datetime import timedelta
 sns.set(style='dark')
 
 # Load data
-all_df = pd.read_csv("main_data.csv")
+all_df = pd.read_csv("dashboard/main_data.csv")
 
 # Konversi kolom timestamp ke datetime
 all_df["order_purchase_timestamp"] = pd.to_datetime(all_df["order_purchase_timestamp"])
