@@ -116,7 +116,6 @@ if option == "Pola Pembayaran":
     ax.set_ylabel("Jumlah Pengguna")
     plt.xticks(rotation=45, ha='right')
     st.pyplot(fig)
-    st.subheader("Bagaimana Pola Pembayaran yang Paling Sering Digunakan?")
 
 # Analisis Waktu Pengiriman
 elif option == "Waktu Pengiriman":
@@ -127,19 +126,28 @@ elif option == "Waktu Pengiriman":
     # Hitung selisih hari antara pembelian dan diterima pelanggan
     delivered_orders["delivery_time_days"] = (delivered_orders["order_delivered_customer_date"] - delivered_orders["order_purchase_timestamp"]).dt.days
 
-    # remove outliers
+    # Remove outliers
     delivered_orders_clean_df = remove_outliers(delivered_orders, 'delivery_time_days')
 
     avg_delivery_time = delivered_orders_clean_df["delivery_time_days"].mean()
     st.write(f"Rata-rata waktu pengiriman: {avg_delivery_time:.2f} hari")
 
-    fig, ax = plt.subplots(figsize=(10, 6))
-    sns.histplot(delivered_orders_clean_df["delivery_time_days"].dropna(), bins=20, kde=True, ax=ax)
+    fig, ax = plt.subplots(figsize=(12, 6))
+    
+    # Histogram
+    sns.histplot(delivered_orders_clean_df["delivery_time_days"], bins=30, kde=True, color="skyblue", ax=ax)
+    
+    # garis rata-rata
+    ax.axvline(avg_delivery_time, color="red", linestyle="dashed", linewidth=2, label=f"Rata-rata: {avg_delivery_time:.2f} hari")
+    
     ax.set_xlabel("Waktu Pengiriman (hari)")
-    ax.set_ylabel("Frekuensi")
+    ax.set_ylabel("Jumlah Pesanan")
     ax.set_title("Distribusi Waktu Pengiriman")
+    
+    ax.legend()
+    
     st.pyplot(fig)
-
+  
 # Analisis Jumlah Pesanan per Hari
 elif option == "Jumlah Pesanan per Hari":
     st.subheader("Jumlah Pesanan Berdasarkan Hari dalam Seminggu")
@@ -196,98 +204,64 @@ elif option == "Analisis RFM":
         st.write("### Data RFM")
         st.dataframe(rfm.head(10))
         
-        rfm_view = st.radio("Pilih Tampilan:", ["Top Customers", "Distribusi RFM"])
+        top_recency = rfm.sort_values(by="Recency", ascending=False).head(5)
+        top_frequency = rfm.sort_values(by="Frequency", ascending=False).head(5)
+        top_monetary = rfm.sort_values(by="Monetary", ascending=False).head(5)
         
-        if rfm_view == "Top Customers":
-          top_recency = rfm.sort_values(by="Recency", ascending=False).head(5)
-          top_frequency = rfm.sort_values(by="Frequency", ascending=False).head(5)
-          top_monetary = rfm.sort_values(by="Monetary", ascending=False).head(5)
-          
-          # Tampilkan top customers chart
-          st.write("### Top 5 Customers berdasarkan Recency")
-          fig_recency, ax_recency = plt.subplots(figsize=(10, 5))
-          bars_recency = ax_recency.barh(top_recency["customer_id"].astype(str), top_recency["Recency"], color="skyblue")
-          ax_recency.set_xlabel("Recency (days)")
-          ax_recency.set_ylabel("Customer ID")
-          ax_recency.set_title("Pelanggan dengan Recency Tertinggi (Paling Lama)")
-          ax_recency.invert_yaxis() 
-          
-          # Tambahkan nilai pada bar chart
-          for bar in bars_recency:
-              width = bar.get_width()
-              ax_recency.text(width + 0.5, bar.get_y() + bar.get_height()/2, f"{width:.0f} hari", 
-                              ha='left', va='center')
-          
-          plt.tight_layout()
-          st.pyplot(fig_recency)
-          
-          st.write("### Top 5 Customers berdasarkan Frequency")
-          fig_freq, ax_freq = plt.subplots(figsize=(10, 5))
-          bars_freq = ax_freq.barh(top_frequency["customer_id"].astype(str), top_frequency["Frequency"], color="lightgreen")
-          ax_freq.set_xlabel("Frequency (jumlah transaksi)")
-          ax_freq.set_ylabel("Customer ID")
-          ax_freq.set_title("Pelanggan dengan Frequency Tertinggi")
-          ax_freq.invert_yaxis() 
-          
-          # Tambahkan nilai pada bar chart
-          for bar in bars_freq:
-              width = bar.get_width()
-              ax_freq.text(width + 0.2, bar.get_y() + bar.get_height()/2, f"{width:.0f}", 
-                          ha='left', va='center')
-          
-          plt.tight_layout()
-          st.pyplot(fig_freq)
-          
-          st.write("### Top 5 Customers berdasarkan Monetary")
-          fig_mon, ax_mon = plt.subplots(figsize=(10, 5))
-          bars_mon = ax_mon.barh(top_monetary["customer_id"].astype(str), top_monetary["Monetary"], color="salmon")
-          ax_mon.set_xlabel("Monetary (R$)")
-          ax_mon.set_ylabel("Customer ID")
-          ax_mon.set_title("Pelanggan dengan Total Pembelian Tertinggi")
-          ax_mon.invert_yaxis()
-          
-          # Format x-axis sebagai currency
-          ax_mon.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, pos: f'R$ {x:,.0f}'))
-          
-          # Tambahkan nilai pada bar chart
-          for bar in bars_mon:
-              width = bar.get_width()
-              ax_mon.text(width + (width*0.02), bar.get_y() + bar.get_height()/2, f"R$ {width:,.2f}", 
-                          ha='left', va='center')
-          
-          plt.tight_layout()
-          st.pyplot(fig_mon)
+        # Tampilkan top customers chart
+        st.write("### Top 5 Customers berdasarkan Recency")
+        fig_recency, ax_recency = plt.subplots(figsize=(10, 5))
+        bars_recency = ax_recency.barh(top_recency["customer_id"].astype(str), top_recency["Recency"], color="skyblue")
+        ax_recency.set_xlabel("Recency (days)")
+        ax_recency.set_ylabel("Customer ID")
+        ax_recency.set_title("Pelanggan dengan Recency Tertinggi (Paling Lama)")
+        ax_recency.invert_yaxis() 
         
+        # Tambahkan nilai pada bar chart
+        for bar in bars_recency:
+            width = bar.get_width()
+            ax_recency.text(width + 0.5, bar.get_y() + bar.get_height()/2, f"{width:.0f} hari", 
+                            ha='left', va='center')
         
-        else:
-            rfm_tabs = st.tabs(["Recency Distribution", "Frequency Distribution", "Monetary Distribution"])
-            
-            with rfm_tabs[0]:
-                fig, ax = plt.subplots(figsize=(10, 6))
-                sns.histplot(rfm["Recency"].dropna(), bins=30, kde=True, ax=ax)
-                ax.set_xlabel("Recency (hari)")
-                ax.set_ylabel("Jumlah Pelanggan")
-                ax.set_title("Distribusi Recency")
-                st.pyplot(fig)
-            
-            with rfm_tabs[1]:
-                freq_filtered = remove_outliers(rfm, "Frequency")
-                fig, ax = plt.subplots(figsize=(10, 6))
-                sns.histplot(freq_filtered["Frequency"].dropna(), bins=20, kde=True, ax=ax)
-                ax.set_xlabel("Frequency (jumlah transaksi)")
-                ax.set_ylabel("Jumlah Pelanggan")
-                ax.set_title("Distribusi Frequency")
-                st.pyplot(fig)
-            
-            with rfm_tabs[2]:
-                mon_filtered = remove_outliers(rfm, "Monetary")
-                fig, ax = plt.subplots(figsize=(10, 6))
-                sns.histplot(mon_filtered["Monetary"].dropna(), bins=20, kde=True, ax=ax)
-                ax.set_xlabel("Monetary (R$)")
-                ax.set_ylabel("Jumlah Pelanggan")
-                ax.set_title("Distribusi Monetary")
-                st.pyplot(fig)
-
+        plt.tight_layout()
+        st.pyplot(fig_recency)
+        
+        st.write("### Top 5 Customers berdasarkan Frequency")
+        fig_freq, ax_freq = plt.subplots(figsize=(10, 5))
+        bars_freq = ax_freq.barh(top_frequency["customer_id"].astype(str), top_frequency["Frequency"], color="lightgreen")
+        ax_freq.set_xlabel("Frequency (jumlah transaksi)")
+        ax_freq.set_ylabel("Customer ID")
+        ax_freq.set_title("Pelanggan dengan Frequency Tertinggi")
+        ax_freq.invert_yaxis() 
+        
+        # Tambahkan nilai pada bar chart
+        for bar in bars_freq:
+            width = bar.get_width()
+            ax_freq.text(width + 0.2, bar.get_y() + bar.get_height()/2, f"{width:.0f}", 
+                        ha='left', va='center')
+        
+        plt.tight_layout()
+        st.pyplot(fig_freq)
+        
+        st.write("### Top 5 Customers berdasarkan Monetary")
+        fig_mon, ax_mon = plt.subplots(figsize=(10, 5))
+        bars_mon = ax_mon.barh(top_monetary["customer_id"].astype(str), top_monetary["Monetary"], color="salmon")
+        ax_mon.set_xlabel("Monetary (R$)")
+        ax_mon.set_ylabel("Customer ID")
+        ax_mon.set_title("Pelanggan dengan Total Pembelian Tertinggi")
+        ax_mon.invert_yaxis()
+        
+        # Format x-axis sebagai currency
+        ax_mon.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, pos: f'R$ {x:,.0f}'))
+        
+        # Tambahkan nilai pada bar chart
+        for bar in bars_mon:
+            width = bar.get_width()
+            ax_mon.text(width + (width*0.02), bar.get_y() + bar.get_height()/2, f"R$ {width:,.2f}", 
+                        ha='left', va='center')
+        
+        plt.tight_layout()
+        st.pyplot(fig_mon)
 elif option == "Tren Bulanan":
     st.subheader("Analisis Tren Bulanan (Revenue & Jumlah Order)")
     
